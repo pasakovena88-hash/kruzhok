@@ -1,1 +1,20 @@
-{"name":"kruzhok","version":"1.0.0","private":true,"dependencies":{"@capacitor/core":"^6.1.2","@capacitor/android":"^6.1.2"},"devDependencies":{"@capacitor/cli":"^6.1.2"}}
+{
+  "name": "kruzhok",
+  "version": "1.0.0",
+  "description": "Кружок: чат с группами, каналами и звонками",
+  "author": "Kruzhok <kruzhok@example.com>",
+  "private": true,
+  "main": "electron/main.js",
+  "scripts": { "start": "electron .", "dist": "electron-builder --publish never" },
+  "dependencies": { "@capacitor/core": "^6.1.2", "@capacitor/android": "^6.1.2" },
+  "devDependencies": { "@capacitor/cli": "^6.1.2", "electron": "^33.0.0", "electron-builder": "^25.1.8" },
+  "build": {
+    "appId": "app.kruzhok.chat",
+    "productName": "Кружок",
+    "files": ["electron/**", "www/**"],
+    "directories": { "output": "dist" },
+    "win": { "target": "nsis" },
+    "mac": { "target": "dmg", "identity": null, "extendInfo": { "NSMicrophoneUsageDescription": "Микрофон нужен для голосовых каналов" } },
+    "linux": { "target": "AppImage", "category": "Network" }
+  }
+}
