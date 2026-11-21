@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Кружок — группы, каналы, звонки</title>
+<style>
+:root{--bg:#f3f4fa;--rail:#e4e6f3;--panel:#fff;--ink:#1b1d2b;--mute:#6b6f88;--line:#dcdeee;--acc:#5b6cff;--accInk:#fff;--hot:#e5484d;--ok:#2fb36d;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12141d;--rail:#0c0e15;--panel:#1a1d2a;--ink:#eceefb;--mute:#8d92ae;--line:#2a2e42;--acc:#7d8bff;--accInk:#10122a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12141d;--rail:#0c0e15;--panel:#1a1d2a;--ink:#eceefb;--mute:#8d92ae;--line:#2a2e42;--acc:#7d8bff;--accInk:#10122a;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+#app{height:100%;display:flex}
+.nav{display:flex;width:100%;max-width:340px;min-width:0}
+.rail{width:68px;background:var(--rail);display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px 0;overflow-y:auto;flex:none}
+.sv{width:48px;height:48px;border-radius:16px;background:var(--panel);font-size:22px;display:grid;place-items:center;transition:border-radius .15s}
+.sv.on{border-radius:24px;background:var(--acc);color:var(--accInk)}
+.sv.add{color:var(--ok);font-size:26px;border:2px dashed var(--line);background:none}
+.list{flex:1;background:var(--panel);display:flex;flex-direction:column;min-width:0;border-radius:20px 0 0 0}
+.list h2{margin:0;padding:16px 16px 10px;font-size:18px;display:flex;justify-content:space-between;align-items:center}
+.sec{display:flex;justify-content:space-between;align-items:center;padding:12px 16px 4px;color:var(--mute);font-size:13px}
+.sec button{font-size:22px;color:var(--mute);width:32px;height:32px}
+.chs{flex:1;overflow-y:auto;padding:0 8px}
+.ch{display:flex;gap:8px;align-items:center;width:100%;text-align:left;padding:10px 10px;border-radius:10px;color:var(--mute)}
+.ch.on{background:var(--bg);color:var(--ink)}
+.ch .ic{width:20px;text-align:center}
+.vbar{margin:8px;padding:10px 12px;border-radius:14px;background:var(--bg);display:flex;align-items:center;gap:8px}
+.vbar .t{flex:1;min-width:0;font-size:14px}
+.vbar small{display:block;color:var(--ok)}
+.vbar button{width:38px;height:38px;border-radius:50%;background:var(--panel)}
+.me{padding:10px 16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--mute)}
+.me button{color:var(--acc)}
+.chat{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg)}
+.chat header{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--panel);font-weight:600}
+.back{display:none;font-size:28px;line-height:1;width:32px}
+#msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
+.m{display:flex;gap:10px;max-width:100%}
+.av{width:38px;height:38px;border-radius:50%;background:var(--acc);color:var(--accInk);display:grid;place-items:center;font-weight:700;flex:none}
+.m b{font-size:14px}.m time{color:var(--mute);font-size:12px;margin-left:6px}
+.m p{margin:2px 0 0;overflow-wrap:anywhere;white-space:pre-wrap}
+.empty{margin:auto;color:var(--mute);text-align:center;padding:24px}
+.compose{display:flex;gap:8px;padding:10px 12px;background:var(--panel);border-top:1px solid var(--line)}
+input{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:11px 14px;min-width:0;width:100%}
+input:focus{outline:2px solid var(--acc);outline-offset:1px}
+.pri{background:var(--acc);color:var(--accInk);border-radius:12px;padding:10px 16px;font-weight:600;flex:none}
+.ghost{border-radius:12px;padding:10px 16px;color:var(--mute)}
+.voice{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:20px;text-align:center}
+.pp{display:flex;flex-wrap:wrap;gap:16px;justify-content:center}
+.pp .av{width:84px;height:84px;font-size:30px;box-shadow:0 0 0 4px transparent;transition:box-shadow .08s}
+.pp .av.sp{box-shadow:0 0 0 4px var(--ok)}
+.pp span{display:block;margin-top:6px;font-size:14px}
+.ctl{display:flex;gap:14px}
+.ctl button{width:58px;height:58px;border-radius:50%;background:var(--panel);font-size:24px;border:1px solid var(--line)}
+.ctl .off{background:var(--hot);color:#fff;border-color:var(--hot)}
+.hint{color:var(--mute);font-size:13px;max-width:320px}
+.err{color:var(--hot);font-size:14px}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;z-index:9}
+#modal[hidden]{display:none}
+.sheet{background:var(--panel);width:100%;max-width:440px;border-radius:22px 22px 0 0;padding:20px 18px calc(18px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px}
+.sheet h3{margin:0}
+.row{display:flex;gap:8px;justify-content:flex-end}
+.seg{display:flex;gap:8px}
+.seg label{flex:1;text-align:center;padding:10px;border:1px solid var(--line);border-radius:12px;cursor:pointer}
+.seg input{display:none}
+.seg label:has(input:checked){background:var(--acc);color:var(--accInk);border-color:var(--acc)}
+@media(max-width:719px){
+ .nav{max-width:none}.chat{display:none}
+ #app[data-view="chat"] .nav{display:none}
+ #app[data-view="chat"] .chat{display:flex}
+ .back{display:block}
+}
+<style>
+.gate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:calc(20px + env(safe-area-inset-top,0px)) 20px 20px;z-index:20;overflow:auto}
+.gate[hidden]{display:none}
+.card{width:100%;max-width:380px;display:flex;flex-direction:column;gap:12px}
+.card h1{margin:0;font-size:30px}.card p{margin:0;color:var(--mute)}
+.lnk{color:var(--acc);text-align:center;padding:6px}
+</style></head><body>
+<div id="app" data-view="nav"><div class="nav"><div class="rail" id="rail"></div><div class="list" id="list"></div></div><main class="chat" id="chat"></main></div>
+<div id="gate" class="gate"><div class="card" id="card"></div></div>
+<div id="modal" hidden></div>
+<script type="module">
+import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,updateProfile} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+import {getFirestore,collection,doc,addDoc,updateDoc,onSnapshot,query,where,orderBy,limit,arrayUnion} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+import {firebaseConfig} from './config.js';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fapp=initializeApp(firebaseConfig),auth=getAuth(fapp),db=getFirestore(fapp);
+let U=null,servers=[],sel=null,chans=[],ch=null,msgs=[],V=null,wc=null;const un={};
+const stop=k=>{if(un[k]){un[k]();un[k]=null}};
+const view=v=>$('#app').dataset.view=v;
+const time=t=>new Date(t).toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'});
+const myName=()=>U.displayName||U.email.split('@')[0];
+const ERR={'auth/email-already-in-use':'Эта почта уже зарегистрирована. Войдите.','auth/invalid-email':'Проверьте адрес почты.','auth/weak-password':'Пароль слишком короткий: нужно от 6 символов.','auth/invalid-credential':'Неверная почта или пароль.','auth/too-many-requests':'Слишком много попыток. Подождите немного.','auth/network-request-failed':'Нет интернета.','permission-denied':'Нет доступа. Проверьте код приглашения.','not-found':'Группа с таким кодом не найдена.'};
+const msgErr=e=>ERR[e.code]||ERR[String(e.code).replace('firestore/','')]||'Не получилось. Проверьте интернет и попробуйте ещё раз.';
+
+onAuthStateChanged(auth,async u=>{
+ U=u;stop('s');stop('c');stop('m');await leave();wc=null;sel=null;ch=null;
+ if(!u)return gate('login');
+ try{await u.reload()}catch(e){}
+ u.emailVerified?enter():gate('verify');
+});
+async function enter(){await U.getIdToken(true);$('#gate').hidden=true;start()}
+function gate(mode,note=''){
+ $('#gate').hidden=false;const c=$('#card');
+ if(mode==='verify'){
+  c.innerHTML=`<h1>Подтвердите почту</h1><p>Мы отправили письмо на ${esc(U.email)}. Откройте ссылку в нём и вернитесь сюда.</p><div class="err" id="er">${note}</div><button class="pri" id="g1">Я подтвердил</button><button class="ghost" id="g2">Отправить письмо ещё раз</button><button class="lnk" id="g3">Выйти</button>`;
+  $('#g1').onclick=async()=>{await U.reload();U.emailVerified?enter():gate('verify','Почта пока не подтверждена.')};
+  $('#g2').onclick=async()=>{try{await sendEmailVerification(U);gate('verify','Письмо отправлено. Проверьте и папку «Спам».')}catch(e){gate('verify',msgErr(e))}};
+  $('#g3').onclick=()=>signOut(auth);return;
+ }
+ const reg=mode==='register';
+ c.innerHTML=`<h1>Кружок</h1><p>${reg?'Создайте аккаунт по почте':'Войдите в аккаунт'}</p>${reg?'<input id="nm" maxlength="20" placeholder="Имя" autocomplete="nickname">':''}<input id="em" type="email" autocomplete="email" placeholder="Почта"><input id="pw" type="password" autocomplete="${reg?'new-password':'current-password'}" placeholder="Пароль, от 6 символов"><div class="err" id="er">${note}</div><button class="pri" id="g1">${reg?'Создать аккаунт':'Войти'}</button><button class="lnk" id="g2">${reg?'Уже есть аккаунт? Войти':'Нет аккаунта? Зарегистрироваться'}</button>${reg?'':'<button class="lnk" id="g3">Забыли пароль?</button>'}`;
+ const err=t=>$('#er').textContent=t;
+ $('#g2').onclick=()=>gate(reg?'login':'register');
+ if(!reg)$('#g3').onclick=async()=>{const em=$('#em').value.trim();if(!em)return err('Введите почту выше.');try{await sendPasswordResetEmail(auth,em);err('Письмо для сброса пароля отправлено.')}catch(e){err(msgErr(e))}};
+ $('#g1').onclick=async()=>{
+  const em=$('#em').value.trim(),pw=$('#pw').value;
+  if(!em||!pw)return err('Введите почту и пароль.');
+  try{
+   if(reg){const nm=$('#nm').value.trim();if(!nm)return err('Введите имя.');
+    const r=await createUserWithEmailAndPassword(auth,em,pw);await updateProfile(r.user,{displayName:nm});await sendEmailVerification(r.user)}
+   else await signInWithEmailAndPassword(auth,em,pw);
+  }catch(e){err(msgErr(e))}};
+}
+
+function start(){
+ un.s=onSnapshot(query(collection(db,'servers'),where('members','array-contains',U.uid)),s=>{
+  servers=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.t-b.t);
+  if(!servers.find(x=>x.id===sel)){sel=servers[0]?servers[0].id:null;ch=null}
+  watchChans();render()});
+}
+function watchChans(){
+ if(wc===sel)return;wc=sel;stop('c');stop('m');chans=[];ch=null;if(!sel)return;
+ un.c=onSnapshot(collection(db,'servers',sel,'channels'),s=>{chans=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.t-b.t);list()});
+}
+function watchMsgs(){
+ stop('m');msgs=[];const c=cur();if(!c||c.type!=='text')return;
+ un.m=onSnapshot(query(collection(db,'servers',sel,'channels',ch,'messages'),orderBy('t'),limit(200)),s=>{msgs=s.docs.map(d=>d.data());drawMsgs()});
+}
+const cur=()=>chans.find(c=>c.id===ch)||null;
+const srv=()=>servers.find(x=>x.id===sel)||null;
+function render(){rail();list();chat()}
+function rail(){
+ $('#rail').innerHTML=servers.map(s=>`<button class="sv${s.id===sel?' on':''}" data-s="${s.id}" aria-label="${esc(s.name)}">${esc(s.emoji)}</button>`).join('')+'<button class="sv add" id="addS" aria-label="Создать группу">+</button>';
+ $('#rail').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.id==='addS')return newServer();
+  sel=b.dataset.s;ch=null;watchChans();render();view('nav')};
+}
+const meRow=()=>`<div class="me"><span>${esc(myName())}</span><button id="out">Выйти</button></div>`;
+function list(){
+ const s=srv(),L=$('#list');
+ let html;
+ if(!s)html=`<h2>Кружок</h2><div class="chs"><div class="empty">Создайте группу или войдите по коду приглашения кнопкой «+».</div></div>`;
+ else{
+  const row=c=>`<button class="ch${c.id===ch?' on':''}" data-c="${c.id}"><span class="ic">${c.type==='text'?'#':'🔊'}</span>${esc(c.name)}</button>`;
+  html=`<h2>${esc(s.name)}<button id="inv" class="ghost" style="padding:6px 10px">Код</button></h2><div class="chs">
+  <div class="sec">Текстовые<button data-add="text" aria-label="Новый текстовый канал">+</button></div>${chans.filter(c=>c.type==='text').map(row).join('')}
+  <div class="sec">Голосовые<button data-add="voice" aria-label="Новый голосовой канал">+</button></div>${chans.filter(c=>c.type==='voice').map(row).join('')}</div>`;
+ }
+ if(V)html+=`<div class="vbar"><div class="t"><small>Голос подключён</small>${esc(V.name)}</div><button id="vm" aria-label="Микрофон">${V.muted?'🔇':'🎙️'}</button><button id="vl" aria-label="Выйти из звонка">📞</button></div>`;
+ L.innerHTML=html+meRow();
+ L.onclick=e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.c){ch=b.dataset.c;watchMsgs();render();view('chat');return}
+  if(b.dataset.add)return newChannel(b.dataset.add);
+  if(b.id==='inv')return invite();
+  if(b.id==='out')return signOut(auth);
+  if(b.id==='vm')return mute();
+  if(b.id==='vl')return leave().then(render)};
+}
+function chat(){
+ const c=cur(),el=$('#chat');
+ if(!c){el.innerHTML='<div class="empty">Выберите канал,<br>чтобы писать или говорить.</div>';return}
+ const head=`<header><button class="back" id="back" aria-label="Назад">‹</button>${c.type==='text'?'#':'🔊'} ${esc(c.name)}</header>`;
+ if(c.type==='text'){
+  el.innerHTML=head+`<div id="msgs"></div><div class="compose"><input id="inp" placeholder="Сообщение в #${esc(c.name)}" autocomplete="off" enterkeyhint="send"><button class="pri" id="send">Отправить</button></div>`;
+  drawMsgs();
+  const go=async()=>{const i=$('#inp'),v=i.value.trim();if(!v)return;i.value='';
+   try{await addDoc(collection(db,'servers',sel,'channels',ch,'messages'),{uid:U.uid,who:myName(),text:v,t:Date.now()})}catch(e){i.value=v}};
+  $('#send').onclick=go;$('#inp').onkeydown=e=>{if(e.key==='Enter')go()};
+ }else{
+  const on=V&&V.ch===c.id;
+  el.innerHTML=head+`<div class="voice">${on?`<div class="pp"><div><div class="av" id="meAv">${esc(myName()[0].toUpperCase())}</div><span>${esc(myName())}</span></div></div>${V.err?`<div class="err">${V.err}</div>`:''}
+  <div class="ctl"><button id="cm" class="${V.muted?'off':''}" aria-label="Микрофон">${V.muted?'🔇':'🎙️'}</button><button id="cl" class="off" aria-label="Выйти">📞</button></div>
+  <div class="hint">Микрофон работает на вашем устройстве. Передача голоса другим участникам (WebRTC) ещё не подключена.</div>`
+  :`<div style="font-size:48px">🔊</div><b>${esc(c.name)}</b><button class="pri" id="jn">Подключиться</button>`}</div>`;
+  if(on){$('#cm').onclick=mute;$('#cl').onclick=()=>leave().then(render)}else $('#jn').onclick=()=>join(c);
+ }
+ $('#back').onclick=()=>view('nav');
+}
+function drawMsgs(){
+ const m=$('#msgs');if(!m)return;
+ m.innerHTML=msgs.length?msgs.map(x=>`<div class="m"><div class="av">${esc((x.who||'?')[0].toUpperCase())}</div><div><b>${esc(x.who)}</b><time>${time(x.t)}</time><p>${esc(x.text)}</p></div></div>`).join(''):'<div class="empty">Здесь пока тихо. Напишите первое сообщение.</div>';
+ m.scrollTop=m.scrollHeight;
+}
+async function join(c){
+ await leave();V={ch:c.id,name:c.name,muted:false};
+ try{const st=await navigator.mediaDevices.getUserMedia({audio:true});V.st=st;
+  const ctx=new(window.AudioContext||window.webkitAudioContext)(),an=ctx.createAnalyser();an.fftSize=512;
+  ctx.createMediaStreamSource(st).connect(an);V.ctx=ctx;V.an=an;tick()}
+ catch(e){V.err='Нет доступа к микрофону. Разрешите его в настройках и подключитесь снова.'}
+ render();
+}
+function tick(){
+ if(!V||!V.an)return;const b=new Uint8Array(V.an.fftSize);V.an.getByteTimeDomainData(b);
+ let s=0;for(const x of b){const d=(x-128)/128;s+=d*d}
+ const el=$('#meAv');if(el)el.classList.toggle('sp',!V.muted&&Math.sqrt(s/b.length)>0.04);
+ V.raf=requestAnimationFrame(tick);
+}
+async function leave(){
+ if(!V)return;cancelAnimationFrame(V.raf);
+ if(V.st)V.st.getTracks().forEach(t=>t.stop());
+ if(V.ctx)try{await V.ctx.close()}catch(e){}
+ V=null;
+}
+function mute(){V.muted=!V.muted;if(V.st)V.st.getAudioTracks().forEach(t=>t.enabled=!V.muted);render()}
+
+function modal(title,body,okLabel,onOk){
+ const m=$('#modal');
+ m.innerHTML=`<div class="sheet"><h3>${title}</h3>${body}<div class="err" id="er"></div><div class="row"><button class="ghost" id="mc">Отмена</button><button class="pri" id="mo">${okLabel}</button></div></div>`;
+ m.hidden=false;const i=$('#mi');if(i)setTimeout(()=>i.focus(),50);
+ const close=()=>{m.hidden=true;m.innerHTML=''};
+ const ok=()=>Promise.resolve(onOk()).then(r=>{if(r!==false)close()}).catch(e=>{$('#er').textContent=msgErr(e)});
+ $('#mc').onclick=close;$('#mo').onclick=ok;m.onclick=e=>{if(e.target===m)close()};
+ if(i)i.onkeydown=e=>{if(e.key==='Enter')ok()};
+}
+function newServer(){
+ modal('Новая группа','<input id="mi" maxlength="30" placeholder="Название группы"><input id="me2" maxlength="2" placeholder="Значок (эмодзи)" value="🎮"><button class="lnk" id="jc">У меня есть код приглашения</button>','Создать',async()=>{
+  const n=$('#mi').value.trim();if(!n)return false;
+  const r=await addDoc(collection(db,'servers'),{name:n,emoji:$('#me2').value.trim()||n[0].toUpperCase(),owner:U.uid,members:[U.uid],t:Date.now()});
+  sel=r.id;ch=null;watchChans();render();view('nav');
+  await addDoc(collection(db,'servers',r.id,'channels'),{name:'общий',type:'text',t:Date.now()});
+  await addDoc(collection(db,'servers',r.id,'channels'),{name:'Голосовая',type:'voice',t:Date.now()+1});
+ });
+ $('#jc').onclick=joinByCode;
+}
+function joinByCode(){
+ modal('Войти по коду','<input id="mi" placeholder="Код приглашения">','Войти',async()=>{
+  const c=$('#mi').value.trim();if(!c)return false;
+  await updateDoc(doc(db,'servers',c),{members:arrayUnion(U.uid)});sel=c;ch=null;watchChans();render();
+ });
+}
+function invite(){
+ const s=srv();
+ modal('Код приглашения',`<p class="hint">Отправьте этот код друзьям: они нажмут «+» и выберут «У меня есть код приглашения».</p><input readonly value="${esc(s.id)}">`,'Копировать',()=>{try{navigator.clipboard.writeText(s.id)}catch(e){}});
+}
+function newChannel(type){
+ modal('Новый канал',`<input id="mi" maxlength="30" placeholder="Название канала"><div class="seg"><label><input type="radio" name="ty" value="text"${type==='text'?' checked':''}>Текстовый</label><label><input type="radio" name="ty" value="voice"${type==='voice'?' checked':''}>Голосовой</label></div>`,'Создать',async()=>{
+  const n=$('#mi').value.trim().toLowerCase().replace(/\s+/g,'-');if(!n)return false;
+  const r=await addDoc(collection(db,'servers',sel,'channels'),{name:n,type:document.querySelector('input[name=ty]:checked').value,t:Date.now()});
+  ch=r.id;watchMsgs();render();view('chat');
+ });
+}
+</script></body></html>

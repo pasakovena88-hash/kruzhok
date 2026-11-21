@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{d}/documents {
+    function member(sid) {
+      return request.auth != null && request.auth.token.email_verified &&
+        request.auth.uid in get(/databases/$(d)/documents/servers/$(sid)).data.members;
+    }
+    match /servers/{sid} {
+      allow create: if request.auth != null && request.auth.token.email_verified &&
+        request.resource.data.members == [request.auth.uid];
+      allow read: if request.auth != null && request.auth.uid in resource.data.members;
+      allow update: if request.auth != null && request.auth.token.email_verified &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']) &&
+        request.resource.data.members.hasAll(resource.data.members) &&
+        request.resource.data.members.size() <= resource.data.members.size() + 1;
+      match /channels/{cid} {
+        allow read, create: if member(sid);
+        match /messages/{mid} {
+          allow read: if member(sid);
+          allow create: if member(sid) && request.resource.data.uid == request.auth.uid;
+        }
+      }
+    }
+  }
+}
